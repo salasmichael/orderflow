@@ -25,4 +25,4 @@ export class OrderService {
 
     return { total: totalInCents };
   }
-}
+} 
