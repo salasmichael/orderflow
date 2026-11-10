@@ -1,6 +1,5 @@
 import { Inject, Injectable } from '@nestjs/common';
 import { ORDER_REPOSITORY } from './order.repository';
-import type { OrderRepository } from './order.repository';
 import { NOTIFICATION_SENDER } from './notification-sender';
 import type { NotificationSender } from './notification-sender';
 import { PriceCalculator } from './price-calculator';
