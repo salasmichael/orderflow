@@ -13,6 +13,7 @@ import { ORDER_REPOSITORY } from './order.repository';
 import { NOTIFICATION_SENDER } from './notification-sender';
 import { PG_POOL, PostgresOrderRepository } from './postgres-order.repository';
 import { ConsoleNotificationSender } from './console-notification.sender';
+import { OrderQueryService } from './order-query.service';
 
 @Module({
   imports: [ConfigModule.forRoot({ isGlobal: true })],
@@ -20,11 +21,14 @@ import { ConsoleNotificationSender } from './console-notification.sender';
   providers: [
     AppService,
     OrderService,
+    OrderQueryService,
     {
       provide: PG_POOL,
       inject: [ConfigService],
       useFactory: (config: ConfigService) =>
-        new Pool({ connectionString: config.getOrThrow<string>('DATABASE_URL') }),
+        new Pool({
+          connectionString: config.getOrThrow<string>('DATABASE_URL'),
+        }),
     },
     { provide: ORDER_REPOSITORY, useClass: PostgresOrderRepository },
     { provide: NOTIFICATION_SENDER, useClass: ConsoleNotificationSender },

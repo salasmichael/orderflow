@@ -7,7 +7,7 @@ import { PriceCalculator } from './price-calculator';
 import { ORDER_REPOSITORY } from './order.repository';
 import { NOTIFICATION_SENDER } from './notification-sender';
 import { BlackFridayDiscount } from './black-friday.discount';
-
+import { OrderQueryService } from './order-query.service';
 
 describe('OrderController (validation)', () => {
   let app: INestApplication;
@@ -17,11 +17,21 @@ describe('OrderController (validation)', () => {
       controllers: [OrderController],
       providers: [
         OrderService,
+        OrderQueryService,
         {
           provide: PriceCalculator,
           useValue: new PriceCalculator([new BlackFridayDiscount()]),
         },
-        { provide: ORDER_REPOSITORY, useValue: { save: async () => {} } },
+        {
+          provide: ORDER_REPOSITORY,
+          useValue: {
+            save: async () => {},
+            findById: async (id: number) =>
+              id === 1
+                ? { id: 1, email: 'test@example.com', total: 140 }
+                : null,
+          },
+        },
         {
           provide: NOTIFICATION_SENDER,
           useValue: { sendOrderCreated: async () => {} },
@@ -81,5 +91,20 @@ describe('OrderController (validation)', () => {
         items: [{ productId: 'p1', priceInCents: -5, quantity: 1 }],
       })
       .expect(400);
+  });
+
+  it('returns an existing order', async () => {
+    await request(app.getHttpServer())
+      .get('/orders/1')
+      .expect(200)
+      .expect({ id: 1, email: 'test@example.com', total: 140 });
+  });
+
+  it('returns 404 when the order does not exist', async () => {
+    await request(app.getHttpServer()).get('/orders/999').expect(404);
+  });
+
+  it('returns 400 when the id is not a number', async () => {
+    await request(app.getHttpServer()).get('/orders/abc').expect(400);
   });
 });

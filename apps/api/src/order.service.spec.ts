@@ -7,7 +7,6 @@ import type { NotificationSender } from './notification-sender';
 import type { OrderDraft } from './order.types';
 import type { OrderWriter } from './order.repository';
 
-
 class FakeOrderRepository implements OrderWriter {
   saved: { email: string; total: number }[] = [];
   async save(order: { email: string; total: number }): Promise<void> {
@@ -70,8 +69,12 @@ describe('OrderService', () => {
 
   it('saves the order and notifies the customer', async () => {
     await service.createOrder(orderWith(1, 5000));
-    expect(repository.saved).toEqual([{ email: 'test@example.com', total: 5000 }]);
-    expect(notifications.sent).toEqual([{ to: 'test@example.com', total: 5000 }]);
+    expect(repository.saved).toEqual([
+      { email: 'test@example.com', total: 5000 },
+    ]);
+    expect(notifications.sent).toEqual([
+      { to: 'test@example.com', total: 5000 },
+    ]);
   });
 
   it('rejects an empty order and does not save anything', async () => {
