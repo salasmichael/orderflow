@@ -2,13 +2,32 @@ name: CI
 
 on:
   push:
-    branches: [master]
+    branches: [main]
   pull_request:
-    branches: [master]
+    branches: [main]
 
 jobs:
   api:
     runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: orderflow
+          POSTGRES_PASSWORD: orderflow
+          POSTGRES_DB: orderflow
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U orderflow"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+
+    env:
+      DATABASE_URL: postgres://orderflow:orderflow@localhost:5432/orderflow
+
     steps:
       - uses: actions/checkout@v4
 
@@ -25,6 +44,12 @@ jobs:
 
       - name: Test
         run: npm run test --workspace api
+
+      - name: Run migrations
+        run: npm run migrate:up --workspace api
+
+      - name: Integration tests
+        run: npm run test:int --workspace api
 
       - name: Build
         run: npm run build --workspace api
