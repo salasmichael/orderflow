@@ -1,4 +1,13 @@
 services:
+  localstack:
+    image: localstack/localstack:4.14
+    container_name: orderflow-localstack
+    ports:
+      - "4566:4566"
+    environment:
+      SERVICES: s3,sqs,dynamodb
+    volumes:
+      - localstack-data:/var/lib/localstack
   postgres:
     image: postgres:16
     container_name: orderflow-postgres
@@ -32,3 +41,4 @@ services:
 
 volumes:
   pgdata:
+  localstack-data:

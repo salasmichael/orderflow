@@ -28,3 +28,10 @@ Thumbs.db
 
 # TypeScript cache
 *.tsbuildinfo
+
+# Terraform
+**/.terraform/
+*.tfstate
+*.tfstate.*
+crash.log
+*.tfvars
