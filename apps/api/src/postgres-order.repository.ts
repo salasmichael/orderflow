@@ -1,7 +1,7 @@
 import { Inject, Injectable, OnModuleDestroy } from '@nestjs/common';
 import { Pool } from 'pg';
 import type { OrderRepository } from './order.repository';
-import type { Order } from './order.types';
+import type { NewOrder, Order } from './order.types';
 
 export const PG_POOL = Symbol('PG_POOL');
 
@@ -11,12 +11,13 @@ export class PostgresOrderRepository
 {
   constructor(@Inject(PG_POOL) private readonly pool: Pool) {}
 
-  async save(order: { email: string; total: number }): Promise<void> {
-    await this.pool.query(
-      'INSERT INTO orders (email, total_in_cents) VALUES ($1, $2)',
+  async save(order: NewOrder): Promise<number> {
+    const result = await this.pool.query(
+      'INSERT INTO orders (email, total_in_cents) VALUES ($1, $2) RETURNING id',
       [order.email, order.total],
     );
-  }
+    return result.rows[0].id;
+}
 
   async onModuleDestroy(): Promise<void> {
     await this.pool.end();

@@ -1,7 +1,7 @@
 import type { NewOrder, Order } from './order.types';
 
 export interface OrderWriter {
-  save(order: NewOrder): Promise<void>;
+  save(order: NewOrder): Promise<number>; // returns the new order id
 }
 
 export interface OrderReader {

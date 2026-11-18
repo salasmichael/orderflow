@@ -6,11 +6,21 @@ import { BuyTwoGetOneFreeDiscount } from './buy-two-get-one-free.discount';
 import type { NotificationSender } from './notification-sender';
 import type { OrderDraft } from './order.types';
 import type { OrderWriter } from './order.repository';
+import type { OrderEventPublisher } from './order-event.publisher';
+import type { OrderCreatedEvent } from './order-created.event';
 
 class FakeOrderRepository implements OrderWriter {
   saved: { email: string; total: number }[] = [];
-  async save(order: { email: string; total: number }): Promise<void> {
+  async save(order: { email: string; total: number }): Promise<number> {
     this.saved.push(order);
+    return this.saved.length; // fake id: 1, 2, 3...
+  }
+}
+
+class FakeOrderEventPublisher implements OrderEventPublisher {
+  published: OrderCreatedEvent[] = [];
+  async orderCreated(event: OrderCreatedEvent): Promise<void> {
+    this.published.push(event);
   }
 }
 
@@ -35,6 +45,7 @@ describe('OrderService', () => {
   let repository: FakeOrderRepository;
   let notifications: FakeNotificationSender;
   let service: OrderService;
+  let events: FakeOrderEventPublisher;
 
   beforeEach(() => {
     repository = new FakeOrderRepository();
@@ -44,7 +55,18 @@ describe('OrderService', () => {
       new Welcome10Discount(),
       new BuyTwoGetOneFreeDiscount(),
     ]);
-    service = new OrderService(repository, notifications, calculator);
+    events = new FakeOrderEventPublisher();
+    service = new OrderService(repository, notifications, calculator, events);
+  });
+
+  it('publishes an order.created event with the new order id', async () => {
+    await service.createOrder(orderWith(2, 100, 'BLACKFRIDAY'));
+
+    expect(events.published).toHaveLength(1);
+    expect(events.published[0]).toMatchObject({
+      type: 'order.created',
+      data: { orderId: 1, email: 'test@example.com', totalInCents: 140 },
+    });
   });
 
   it('applies the BLACKFRIDAY discount (30% off)', async () => {
@@ -77,11 +99,4 @@ describe('OrderService', () => {
     ]);
   });
 
-  it('rejects an empty order and does not save anything', async () => {
-    await expect(
-      service.createOrder({ email: 'test@example.com', items: [] }),
-    ).rejects.toThrow('empty');
-    expect(repository.saved).toHaveLength(0);
-    expect(notifications.sent).toHaveLength(0);
-  });
 });

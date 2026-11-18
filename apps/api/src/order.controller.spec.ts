@@ -3,11 +3,12 @@ import { Test } from '@nestjs/testing';
 import * as request from 'supertest';
 import { OrderController } from './order.controller';
 import { OrderService } from './order.service';
+import { OrderQueryService } from './order-query.service';
 import { PriceCalculator } from './price-calculator';
 import { ORDER_REPOSITORY } from './order.repository';
 import { NOTIFICATION_SENDER } from './notification-sender';
+import { ORDER_EVENT_PUBLISHER } from './order-event.publisher';
 import { BlackFridayDiscount } from './black-friday.discount';
-import { OrderQueryService } from './order-query.service';
 
 describe('OrderController (validation)', () => {
   let app: INestApplication;
@@ -25,7 +26,7 @@ describe('OrderController (validation)', () => {
         {
           provide: ORDER_REPOSITORY,
           useValue: {
-            save: async () => {},
+            save: async () => 1,
             findById: async (id: number) =>
               id === 1
                 ? { id: 1, email: 'test@example.com', total: 140 }
@@ -35,6 +36,10 @@ describe('OrderController (validation)', () => {
         {
           provide: NOTIFICATION_SENDER,
           useValue: { sendOrderCreated: async () => {} },
+        },
+        {
+          provide: ORDER_EVENT_PUBLISHER,
+          useValue: { orderCreated: async () => {} },
         },
       ],
     }).compile();

@@ -33,11 +33,15 @@ services:
     environment:
       PORT: 4000
       DATABASE_URL: postgres://orderflow:orderflow@postgres:5432/orderflow
+      SQS_ENDPOINT: http://localstack:4566
+      SQS_QUEUE_URL: http://localstack:4566/000000000000/order-created
     ports:
       - "4001:4000"
     depends_on:
       postgres:
         condition: service_healthy
+      localstack:
+        condition: service_started
 
 volumes:
   pgdata:
