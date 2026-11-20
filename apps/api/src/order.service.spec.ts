@@ -3,17 +3,16 @@ import { PriceCalculator } from './price-calculator';
 import { BlackFridayDiscount } from './black-friday.discount';
 import { Welcome10Discount } from './welcome10.discount';
 import { BuyTwoGetOneFreeDiscount } from './buy-two-get-one-free.discount';
-import type { NotificationSender } from './notification-sender';
-import type { OrderDraft } from './order.types';
 import type { OrderWriter } from './order.repository';
 import type { OrderEventPublisher } from './order-event.publisher';
 import type { OrderCreatedEvent } from './order-created.event';
+import type { OrderDraft } from './order.types';
 
 class FakeOrderRepository implements OrderWriter {
   saved: { email: string; total: number }[] = [];
   async save(order: { email: string; total: number }): Promise<number> {
     this.saved.push(order);
-    return this.saved.length; // fake id: 1, 2, 3...
+    return this.saved.length;
   }
 }
 
@@ -21,13 +20,6 @@ class FakeOrderEventPublisher implements OrderEventPublisher {
   published: OrderCreatedEvent[] = [];
   async orderCreated(event: OrderCreatedEvent): Promise<void> {
     this.published.push(event);
-  }
-}
-
-class FakeNotificationSender implements NotificationSender {
-  sent: { to: string; total: number }[] = [];
-  async sendOrderCreated(to: string, total: number): Promise<void> {
-    this.sent.push({ to, total });
   }
 }
 
@@ -43,30 +35,18 @@ const orderWith = (
 
 describe('OrderService', () => {
   let repository: FakeOrderRepository;
-  let notifications: FakeNotificationSender;
-  let service: OrderService;
   let events: FakeOrderEventPublisher;
+  let service: OrderService;
 
   beforeEach(() => {
     repository = new FakeOrderRepository();
-    notifications = new FakeNotificationSender();
+    events = new FakeOrderEventPublisher();
     const calculator = new PriceCalculator([
       new BlackFridayDiscount(),
       new Welcome10Discount(),
       new BuyTwoGetOneFreeDiscount(),
     ]);
-    events = new FakeOrderEventPublisher();
-    service = new OrderService(repository, notifications, calculator, events);
-  });
-
-  it('publishes an order.created event with the new order id', async () => {
-    await service.createOrder(orderWith(2, 100, 'BLACKFRIDAY'));
-
-    expect(events.published).toHaveLength(1);
-    expect(events.published[0]).toMatchObject({
-      type: 'order.created',
-      data: { orderId: 1, email: 'test@example.com', totalInCents: 140 },
-    });
+    service = new OrderService(repository, calculator, events);
   });
 
   it('applies the BLACKFRIDAY discount (30% off)', async () => {
@@ -89,14 +69,18 @@ describe('OrderService', () => {
     expect(result.total).toBe(200);
   });
 
-  it('saves the order and notifies the customer', async () => {
+  it('saves the order', async () => {
     await service.createOrder(orderWith(1, 5000));
-    expect(repository.saved).toEqual([
-      { email: 'test@example.com', total: 5000 },
-    ]);
-    expect(notifications.sent).toEqual([
-      { to: 'test@example.com', total: 5000 },
-    ]);
+    expect(repository.saved).toEqual([{ email: 'test@example.com', total: 5000 }]);
   });
 
+  it('publishes an order.created event with the new order id', async () => {
+    await service.createOrder(orderWith(2, 100, 'BLACKFRIDAY'));
+
+    expect(events.published).toHaveLength(1);
+    expect(events.published[0]).toMatchObject({
+      type: 'order.created',
+      data: { orderId: 1, email: 'test@example.com', totalInCents: 140 },
+    });
+  });
 });

@@ -15,7 +15,8 @@
     "migrate": "node-pg-migrate -m migrations --migration-file-language sql",
     "migrate:up": "node-pg-migrate up -m migrations",
     "migrate:down": "node-pg-migrate down -m migrations",
-    "test:int": "jest --config ./test/jest-int.json"
+    "test:int": "jest --config ./test/jest-int.json",
+    "start:worker": "nest start --entryFile worker.main --watch"
   },
   "dependencies": {
     "@aws-sdk/client-sqs": "^3.1171.0",
