@@ -19,6 +19,10 @@ import { PriceCalculator } from './price-calculator';
 import { SqsOrderEventPublisher } from './sqs-order-event.publisher';
 import { Welcome10Discount } from './welcome10.discount';
 
+import { CompositeOrderEventPublisher } from './composite-order-event.publisher';
+import { KafkaOrderEventPublisher } from './kafka-order-event.publisher';
+import { kafkaClientProvider } from './kafka.providers';
+
 @Module({
   imports: [ConfigModule.forRoot({ isGlobal: true })],
   controllers: [AppController, OrderController],
@@ -29,8 +33,16 @@ import { Welcome10Discount } from './welcome10.discount';
     pgPoolProvider,
     sqsClientProvider,
     orderQueueUrlProvider,
+    kafkaClientProvider,
+    SqsOrderEventPublisher,
+    KafkaOrderEventPublisher,
     { provide: ORDER_REPOSITORY, useClass: PostgresOrderRepository },
-    { provide: ORDER_EVENT_PUBLISHER, useClass: SqsOrderEventPublisher },
+    {
+      provide: ORDER_EVENT_PUBLISHER,
+      inject: [SqsOrderEventPublisher, KafkaOrderEventPublisher],
+      useFactory: (sqs: SqsOrderEventPublisher, kafka: KafkaOrderEventPublisher) =>
+        new CompositeOrderEventPublisher([sqs, kafka]),
+    },
     {
       provide: PriceCalculator,
       useFactory: () =>
