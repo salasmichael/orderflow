@@ -31,6 +31,9 @@ describe('OrderController (validation)', () => {
               id === 1
                 ? { id: 1, email: 'test@example.com', total: 140 }
                 : null,
+            findRecent: async () => [
+              { id: 1, email: 'test@example.com', total: 140 },
+            ],
           },
         },
         {
@@ -51,6 +54,7 @@ describe('OrderController (validation)', () => {
     await app.init();
   });
 
+  
   afterAll(async () => {
     await app.close();
   });
@@ -108,4 +112,13 @@ describe('OrderController (validation)', () => {
   it('returns 400 when the id is not a number', async () => {
     await request(app.getHttpServer()).get('/orders/abc').expect(400);
   });
+
+  it('lists orders', async () => {
+    await request(app.getHttpServer())
+      .get('/orders')
+      .expect(200)
+      .expect([{ id: 1, email: 'test@example.com', total: 140 }]);
+  });
+
+
 });

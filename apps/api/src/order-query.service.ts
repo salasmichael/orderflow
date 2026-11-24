@@ -12,4 +12,9 @@ export class OrderQueryService {
     if (!order) throw new NotFoundException(`Order ${id} not found`);
     return order;
   }
+
+  async listRecent(limit = 50): Promise<Order[]> {
+    return this.orders.findRecent(limit);
+  }
+
 }

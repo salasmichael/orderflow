@@ -6,6 +6,10 @@ import type { Order } from './order.types';
 class FakeOrderReader implements OrderReader {
   constructor(private readonly orders: Order[]) {}
 
+  async findRecent(limit: number): Promise<Order[]> {
+    return [...this.orders].sort((a, b) => b.id - a.id).slice(0, limit);
+  }
+
   async findById(id: number): Promise<Order | null> {
     return this.orders.find((order) => order.id === id) ?? null;
   }
@@ -28,4 +32,15 @@ describe('OrderQueryService', () => {
       NotFoundException,
     );
   });
+
+  it('lists orders, newest first', async () => {
+    const newer: Order = { id: 2, email: 'b@example.com', total: 500 };
+    const listService = new OrderQueryService(
+      new FakeOrderReader([existing, newer]),
+    );
+
+    await expect(listService.listRecent()).resolves.toEqual([newer, existing]);
+  });
+
+  
 });

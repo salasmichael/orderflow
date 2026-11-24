@@ -26,4 +26,9 @@ export class OrderController {
   getById(@Param('id', ParseIntPipe) id: number) {
     return this.orderQueryService.getById(id);
   }
+
+  @Get()
+  list() {
+    return this.orderQueryService.listRecent();
+  }
 }

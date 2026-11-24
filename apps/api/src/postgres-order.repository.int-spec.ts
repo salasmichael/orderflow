@@ -39,4 +39,14 @@ describe('PostgresOrderRepository (integration)', () => {
       repository.save({ email: 'test@example.com', total: -1 }),
     ).rejects.toThrow();
   });
+
+  it('lists recent orders, newest first', async () => {
+    await repository.save({ email: 'a@example.com', total: 100 });
+    await repository.save({ email: 'b@example.com', total: 200 });
+
+    const orders = await repository.findRecent(10);
+
+    expect(orders.map((o) => o.email)).toEqual(['b@example.com', 'a@example.com']);
+  });
+
 });
