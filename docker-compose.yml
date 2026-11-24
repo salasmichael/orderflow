@@ -1,13 +1,4 @@
 services:
-  localstack:
-    image: localstack/localstack:4.14
-    container_name: orderflow-localstack
-    ports:
-      - "4566:4566"
-    environment:
-      SERVICES: s3,sqs,dynamodb
-    volumes:
-      - localstack-data:/var/lib/localstack
   postgres:
     image: postgres:16
     container_name: orderflow-postgres
@@ -24,6 +15,17 @@ services:
       interval: 5s
       timeout: 5s
       retries: 10
+
+  localstack:
+    image: localstack/localstack:4.14
+    container_name: orderflow-localstack
+    ports:
+      - "4566:4566"
+    environment:
+      SERVICES: s3,sqs,dynamodb
+    volumes:
+      - localstack-data:/var/lib/localstack
+
   kafka:
     image: apache/kafka:4.0.0
     container_name: orderflow-kafka
@@ -53,6 +55,7 @@ services:
       DATABASE_URL: postgres://orderflow:orderflow@postgres:5432/orderflow
       SQS_ENDPOINT: http://localstack:4566
       SQS_QUEUE_URL: http://localstack:4566/000000000000/order-created
+      KAFKA_BROKERS: kafka:9093
     ports:
       - "4001:4000"
     depends_on:
@@ -60,27 +63,7 @@ services:
         condition: service_healthy
       localstack:
         condition: service_started
-      KAFKA_BROKERS: kafka:9093
-      depends_on:
-        kafka:
-      condition: service_started
-        
-  worker:
-    build:
-      context: .
-      dockerfile: apps/api/Dockerfile
-    container_name: orderflow-worker
-    command: ["node", "dist/worker.main.js"]
-    environment:
-      DATABASE_URL: postgres://orderflow:orderflow@postgres:5432/orderflow
-      SQS_ENDPOINT: http://localstack:4566
-      SQS_QUEUE_URL: http://localstack:4566/000000000000/order-created
-    depends_on:
-      postgres:
-        condition: service_healthy
-      localstack:
-        condition: service_started
-      api:
+      kafka:
         condition: service_started
 
 volumes:

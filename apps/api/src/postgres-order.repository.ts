@@ -32,4 +32,17 @@ export class PostgresOrderRepository
     if (!row) return null;
     return { id: row.id, email: row.email, total: row.total_in_cents };
   }
+
+  async findRecent(limit: number): Promise<Order[]> {
+    const result = await this.pool.query(
+      'SELECT id, email, total_in_cents FROM orders ORDER BY id DESC LIMIT $1',
+      [limit],
+    );
+    return result.rows.map((row) => ({
+      id: row.id,
+      email: row.email,
+      total: row.total_in_cents,
+    }));
+  }
+
 }

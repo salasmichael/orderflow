@@ -12,3 +12,8 @@ export interface OrderReader {
 export interface OrderRepository extends OrderWriter, OrderReader {}
 
 export const ORDER_REPOSITORY = Symbol('ORDER_REPOSITORY');
+
+export interface OrderReader {
+  findById(id: number): Promise<Order | null>;
+  findRecent(limit: number): Promise<Order[]>;
+}
